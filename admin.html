@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clothify - Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #8B5CF6; --secondary-color: #EC4899; --error-color: #EF4444;
+            --card-bg: #FFFFFF; --text-primary: #1F2937; --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { color: var(--primary-color); }
+        .card {
+            background: var(--card-bg); border-radius: 12px;
+            padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .admin-table { width: 100%; border-collapse: collapse; overflow-x: auto; display: block; }
+        .admin-table th {
+            background: var(--primary-color); color: white;
+            padding: 12px; text-align: left;
+        }
+        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: 600; text-decoration: none; display: inline-block;
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-danger { background: var(--error-color); color: white; }
+        .modal {
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center; justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white; padding: 24px; border-radius: 16px;
+            width: 90%; max-width: 600px;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 24px; }
+        .tab-button {
+            padding: 12px 24px; cursor: pointer; border: none; background: transparent;
+            font-size: 16px; font-weight: 600; color: var(--text-secondary);
+            border-bottom: 4px solid transparent;
+        }
+        .tab-button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Admin Panel</h1>
+            <a href="index.html" class="btn btn-primary">Back to Inventory</a>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-button active" onclick="openTab(event, 'dashboard')">Dashboard</button>
+                <button class="tab-button" onclick="openTab(event, 'staff')">Staff Management</button>
+                <button class="tab-button" onclick="openTab(event, 'payroll')">Payroll</button>
+                <button class="tab-button" onclick="openTab(event, 'logs')">Activity Logs</button>
+                <button class="tab-button" onclick="openTab(event, 'settings')">Settings</button>
+            </div>
+
+            <div id="dashboard" class="tab-content active">
+                <h2>Dashboard</h2>
+                <div class="dashboard-grid" style="margin-top: 20px;">
+                    <div class="card">
+                        <h4>Total Staff</h4>
+                        <p id="total-staff" style="font-size: 24px; font-weight: bold;">0</p>
+                    </div>
+                    <div class="card">
+                        <h4>Total Hours (This Month)</h4>
+                        <p id="total-hours" style="font-size: 24px; font-weight: bold;">0</p>
+                    </div>
+                    <div class="card">
+                        <h4>Total Payroll (This Month)</h4>
+                        <p id="total-payroll" style="font-size: 24px; font-weight: bold;">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="staff" class="tab-content">
+                <h2>Staff Management</h2>
+                <button class="btn btn-primary" id="add-staff-btn" style="margin-top: 16px;">Add New Staff</button>
+                <table class="admin-table" style="margin-top: 16px;">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>User ID</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-tbody"></tbody>
+                </table>
+            </div>
+
+            <div id="payroll" class="tab-content">
+                <h2>Attendance & Payroll</h2>
+                <div class="form-group">
+                    <label for="payroll-month">Select Month</label>
+                    <input type="month" id="payroll-month" class="form-control">
+                </div>
+                <button id="generate-payroll-btn" class="btn btn-secondary">Generate Payroll</button>
+                <table class="admin-table" style="margin-top: 16px;">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Total Hours</th>
+                            <th>Salary Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payroll-tbody"></tbody>
+                </table>
+                <button id="export-payroll-btn" class="btn btn-primary" style="margin-top: 16px;">Export to Excel</button>
+            </div>
+
+            <div id="logs" class="tab-content">
+                <h2>Activity Logs</h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-tbody"></tbody>
+                </table>
+            </div>
+
+            <div id="settings" class="tab-content">
+                <h2>Admin Account Settings</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">Update your login credentials here.</p>
+                <form id="admin-creds-form">
+                    <div class="form-group">
+                        <label for="new-admin-id">New Admin User ID</label>
+                        <input type="text" id="new-admin-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-admin-password">New Admin Password</label>
+                        <input type="password" id="new-admin-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Credentials</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="staff-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Add Staff</h2>
+            <form id="staff-form">
+                <input type="hidden" id="staff-id-hidden">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userId">Staff ID</label>
+                        <input type="text" id="userId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role/Designation</label>
+                        <input type="text" id="role">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" id="address">
+                    </div>
+                    <div class="form-group">
+                        <label for="joining_date">Date of Joining</label>
+                        <input type="date" id="joining_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="salary_type">Salary Type</label>
+                        <select id="salary_type">
+                            <option value="monthly">Monthly</option>
+                            <option value="hourly">Hourly</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="base_salary">Base Salary / Hourly Rate</label>
+                        <input type="number" id="base_salary">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn" id="cancel-btn">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
+    <script src="payroll.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clothify - Inventory Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #8B5CF6;
+            --secondary-color: #EC4899;
+            --success-color: #10B981;
+            --error-color: #EF4444;
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .search-bar::before {
+            content: "🔍";
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .controls select {
+            padding: 10px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .inventory-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .inventory-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .inventory-table tr:hover {
+            background: #F3F4F6;
+        }
+        
+        .product-image-container img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .qr-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .qr-code-img {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .qr-code-img:hover {
+            transform: scale(1.2);
+        }
+
+        .btn-qr-bulk {
+            padding: 6px 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        #image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .scanner-container {
+            text-align: center;
+        }
+
+        #reader {
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        .scanner-status {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        
+        .scanner-status.ready { background: #EFF6FF; color: #1E40AF; }
+        .scanner-status.success { background: #D1FAE5; color: #065F46; }
+        .scanner-status.error { background: #FEE2E2; color: #991B1B; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-btn.active {
+            color: var(--primary-color);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .nav-btn .icon {
+            font-size: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            position: relative;
+            text-align: center;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #888;
+        }
+        
+        #camera-video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        
+        #capture-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-color: var(--primary-color);
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+        }
+        
+        #image-modal-content, #qr-image-modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 16px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🎽 Clothify Inventory System</h1>
+                <p>Smart inventory management with QR code tracking</p>
+            </div>
+        </div>
+
+        <section id="dashboard-section" class="section active">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">👋 Welcome, <span id="staff-name"></span>!</h2>
+                <button id="check-in-out-btn" class="btn btn-primary" style="width: 100%; padding: 20px; font-size: 24px;"></button>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Today's Summary</h3>
+                <p><strong>Hours Worked:</strong> <span id="today-hours">0.00</span></p>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 10px;">Monthly Summary</h3>
+                <p><strong>Total Hours Worked:</strong> <span id="monthly-hours">0.00</span></p>
+                <p><strong>Estimated Salary:</strong> $<span id="estimated-salary">0.00</span></p>
+            </div>
+        </section>
+
+        <section id="inventory-section" class="section">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">📦 Inventory Overview</h2>
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search by design or SKU...">
+                </div>
+                <div class="controls">
+                    <select id="sort-select">
+                        <option value="">Sort by...</option>
+                        <option value="design">Design</option>
+                        <option value="stock">Stock Level</option>
+                        <option value="sold">Units Sold</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>SKU</th>
+                                <th>Design</th>
+                                <th>Stock</th>
+                                <th>Sold</th>
+                                <th>QR Actions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="add-section" class="section">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">➕ Add/Restock Product</h2>
+                <form id="add-product-form">
+                    <input type="hidden" id="product-sku" name="sku">
+                    <div class="form-group">
+                        <label for="design">Design/Style</label>
+                        <input type="text" id="design" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Initial Stock</label>
+                        <input type="number" id="stock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-link">Product Link</label>
+                        <input type="url" id="product-link" placeholder="https://example.com/product-page">
+                    </div>
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <img id="image-preview" src="" alt="Image Preview"/>
+                        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                        <button type="button" class="btn" onclick="document.getElementById('image-upload').click()">Upload Image</button>
+                        <button type="button" class="btn" onclick="inventoryManager.openCamera()">Take Photo</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add/Update Product</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="scan-section" class="section">
+            <div class="card scanner-container">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">📷 QR Code Scanner</h2>
+                <div id="scanner-status" class="scanner-status ready">Ready to scan...</div>
+                <div id="reader"></div>
+            </div>
+        </section>
+
+        <section id="analysis-section" class="section">
+            <div class="card" style="text-align: center;">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">📊 Business Analysis</h2>
+                <p style="margin-bottom: 24px; color: var(--text-secondary);">
+                    View comprehensive analytics and insights about your inventory.
+                </p>
+                <a href="analysis.html" class="btn btn-primary" style="text-decoration: none;">
+                    Open Analysis Dashboard
+                </a>
+            </div>
+        </section>
+
+        <section id="settings-section" class="section">
+             <div class="card">
+                <h2 style="margin-bottom: 20px; color: var(--primary-color);">⚙️ Settings</h2>
+                <p style="margin-bottom: 20px;">Manage your session and access admin tools here.</p>
+                <a href="admin.html" id="admin-panel-link" class="btn btn-primary" style="display: none; background: var(--secondary-color);">Go to Admin Panel</a>
+                <button id="logout-btn" class="btn btn-danger">Logout</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-container">
+            <button class="nav-btn active" data-section="dashboard">
+                <span class="icon">🏠</span>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" data-section="inventory">
+                <span class="icon">📦</span>
+                <span>Inventory</span>
+            </button>
+            <button class="nav-btn" data-section="add">
+                <span class="icon">➕</span>
+                <span>Add</span>
+            </button>
+            <button class="nav-btn" data-section="scan">
+                <span class="icon">📷</span>
+                <span>Scan</span>
+            </button>
+            <button class="nav-btn" data-section="settings">
+                <span class="icon">⚙️</span>
+                <span>Settings</span>
+            </button>
+        </div>
+    </div>
+    
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="this.parentElement.parentElement.classList.remove('show')">&times;</span>
+            <h3>Success!</h3>
+            <p id="success-message"></p>
+            <div id="qr-options">
+                <button class="btn" id="success-download-one-qr-btn">Download 1 QR</button>
+                <hr>
+                <input type="number" id="success-qr-quantity" value="24" min="1" class="form-group">
+                <button class="btn btn-primary" id="success-generate-qr-btn">Bulk Download QR</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="qr-image-modal" class="modal" onclick="this.classList.remove('show')">
+        <div class="modal-content">
+            <span class="modal-close" onclick="this.parentElement.parentElement.classList.remove('show')">&times;</span>
+            <img id="qr-image-modal-content" src="" alt="Enlarged QR Code">
+            <button class="btn btn-primary" id="qr-download-btn">Download QR</button>
+        </div>
+    </div>
+    
+    <div id="image-modal" class="modal" onclick="this.classList.remove('show')">
+        <span class="modal-close" onclick="this.parentElement.classList.remove('show')">&times;</span>
+        <img id="image-modal-content" src="" alt="Enlarged Product Image">
+    </div>
+    
+    <div id="camera-modal" class="modal">
+        <div class="modal-content">
+            <video id="camera-video" autoplay playsinline></video>
+            <button id="capture-btn"></button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="auth.js"></script>
+    <script src="inventory.js"></script>
+    <script src="attendance.js"></script>
+</body>
+</html>

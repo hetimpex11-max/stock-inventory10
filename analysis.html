@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clothify Analytics - Business Intelligence Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #8B5CF6; --secondary-color: #EC4899; --success-color: #10B981;
+            --warning-color: #F59E0B; --error-color: #EF4444; --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF; --text-primary: #1F2937; --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px;
+        }
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 24px; margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); display: flex;
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+        }
+        .dashboard-header h1 { color: var(--primary-color); font-size: 28px; }
+        .back-btn {
+            padding: 10px 20px; background: var(--primary-color); color: white; border: none;
+            border-radius: 8px; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 8px; font-weight: 600;
+        }
+        .metrics-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px; margin-bottom: 24px;
+        }
+        .metric-card {
+            background: var(--card-bg); border-radius: 12px; padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .metric-label { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+        .metric-value { font-size: 32px; font-weight: bold; color: var(--text-primary); }
+        .chart-container {
+            background: var(--card-bg); border-radius: 12px; padding: 24px;
+            margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container h2 { color: var(--text-primary); margin-bottom: 20px; font-size: 20px; }
+        .chart-wrapper { position: relative; height: 300px; }
+        .analysis-table { width: 100%; border-collapse: collapse; }
+        .analysis-table th { background: var(--primary-color); color: white; padding: 12px; text-align: left; }
+        .analysis-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        .product-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .btn-remove {
+            padding: 6px 12px;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>Clothify Analytics Dashboard</h1>
+        <a href="index.html" class="back-btn">竊Back to Admin Portal</a>
+    </div>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">Total Products</div>
+            <div class="metric-value" id="total-products">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Total Stock</div>
+            <div class="metric-value" id="total-stock">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Total Units Sold</div>
+            <div class="metric-value" id="total-sold">0</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Avg. Turnover Rate</div>
+            <div class="metric-value" id="avg-turnover">0%</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>嶋 Current Stock Levels</h2>
+        <div class="chart-wrapper">
+            <canvas id="stockChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <h2>醇 Top 5 Best Sellers</h2>
+        <div class="chart-wrapper">
+            <canvas id="topSellersChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <h2>投 Sales Trend (Last 7 Days)</h2>
+        <div class="chart-wrapper">
+            <canvas id="salesTrendChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <h2>醗 Demand Forecast (Next 7 Days)</h2>
+        <div class="chart-wrapper">
+            <canvas id="forecastChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>搭 SKU Performance Analysis</h2>
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Stock</th>
+                    <th>Sold</th>
+                    <th>Turnover Rate</th>
+                </tr>
+            </thead>
+            <tbody id="sku-analysis-tbody"></tbody>
+        </table>
+    </div>
+
+    <div class="chart-container">
+        <h2>圻 Top 10 Non-Selling Items (Last 30 Days)</h2>
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Days Since Last Sale</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="not-selling-tbody"></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="analytics.js"></script>
+</body>
+</html>
